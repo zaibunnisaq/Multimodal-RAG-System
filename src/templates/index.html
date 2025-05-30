@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Multimodal RAG Search</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2em auto; }
+    textarea, input { width: 100%; margin-bottom: 1em; }
+    img { max-width: 100%; }
+    .hit { margin: .5em 0; padding: .5em; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>Multimodal RAG Search</h1>
+  
+  <h3>Text Query</h3>
+  <textarea id="textQuery" placeholder="Type your question..."></textarea>
+  
+  <h3>OR Upload Image</h3>
+  <input type="file" id="fileInput" accept="image/*"/>
+  
+  <button id="searchBtn">Search</button>
+  
+  <h2>Answer</h2>
+  <pre id="answer"></pre>
+  
+  <h2>Hits</h2>
+  <div id="hits"></div>
+  
+  <script>
+    document.getElementById("searchBtn").onclick = async () => {
+      const text = document.getElementById("textQuery").value;
+      const file = document.getElementById("fileInput").files[0];
+      let payload = {};
+      if (text.trim()) {
+        payload.text = text;
+      } else if (file) {
+        const b64 = await new Promise(r => {
+          const rdr = new FileReader();
+          rdr.onload = e => r(e.target.result.split(',')[1]);
+          rdr.readAsDataURL(file);
+        });
+        payload.image = b64;
+      } else {
+        alert("Enter text or select an image.");
+        return;
+      }
+      
+      const res = await fetch("/api/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+      
+      document.getElementById("answer").textContent = res.answer;
+      const hitsDiv = document.getElementById("hits");
+      hitsDiv.innerHTML = "";
+      res.hits.forEach(h => {
+        const d = document.createElement("div");
+        d.className = "hit";
+        d.textContent = `ID: ${h.id} — ${h.caption} (score: ${h.score.toFixed(3)})`;
+        hitsDiv.appendChild(d);
+      });
+    };
+  </script>
+</body>
+</html>

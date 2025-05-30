@@ -1,0 +1,13 @@
+pdfplumber
+pymupdf
+pytesseract
+opencv-python
+pillow
+sentence-transformers
+transformers
+torch
+torchvision
+chromadb
+scikit-learn
+openai
+streamlit
